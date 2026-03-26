@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "bgp-ls-collector"
+version = "1.0.0"
+description = "BGP-LS Topology Collector for Nokia SROS Routers"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.111.0",
+    "uvicorn[standard]>=0.29.0",
+    "pydantic>=2.7.0",
+    "pydantic-settings>=2.2.0",
+    "networkx>=3.3",
+    "PyYAML>=6.0.1",
+    "loguru>=0.7.2",
+    "websockets>=12.0",
+]
+
+[project.scripts]
+bgp-ls-collector = "bgp_ls_collector.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bgp_ls_collector*"]

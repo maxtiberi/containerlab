@@ -1,0 +1,58 @@
+# BGP-LS Topology Collector — Configuration
+# -----------------------------------------
+# All values can also be set via environment variables (BGPLS_* prefix).
+# CLI arguments take the highest precedence.
+
+bgp:
+  # Local AS number for the collector
+  local_as: 65000
+
+  # BGP Router-ID (must be unique — typically the collector's loopback IP)
+  router_id: "10.0.0.254"
+
+  # Address and port to listen on for incoming BGP connections
+  bind: "0.0.0.0"
+  port: 179
+
+  # Hold time advertised in BGP OPEN (seconds); 0 = no hold timer
+  hold_time: 90
+
+  # Seconds between reconnect attempts when in active (client) mode
+  connect_retry: 30
+
+  # If true, accept connections from any peer (no pre-configured neighbor needed).
+  # Useful for lab environments.  Set to false in production.
+  allow_dynamic_peers: false
+
+  # List of Nokia SROS routers to accept BGP-LS sessions from.
+  # Each router must be configured to peer with this collector and
+  # advertise the BGP-LS (AFI=16388, SAFI=71) address family.
+  peers:
+    - neighbor_ip: "192.168.1.1"
+      remote_as: 65001
+      description: "Nokia SROS PE-1"
+
+    - neighbor_ip: "192.168.1.2"
+      remote_as: 65001
+      description: "Nokia SROS PE-2"
+
+    - neighbor_ip: "192.168.1.3"
+      remote_as: 65001
+      description: "Nokia SROS P-1"
+
+    # Example of an active-mode peer (collector connects outbound)
+    # - neighbor_ip: "192.168.2.1"
+    #   remote_as: 65002
+    #   description: "Remote SROS Router"
+    #   passive: false
+
+api:
+  # REST API + WebSocket listen address
+  host: "0.0.0.0"
+  port: 8080
+
+logging:
+  # Log level: TRACE | DEBUG | INFO | WARNING | ERROR
+  level: INFO
+  # Output format: "text" (human-readable) or "json" (structured)
+  format: text
