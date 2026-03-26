@@ -385,16 +385,23 @@ class BGPServer:
         self._server: asyncio.Server | None = None
         self._active_tasks: list[asyncio.Task] = []
 
-    def add_peer(self, neighbor_ip: str, remote_as: int, **kwargs) -> None:
-        """Register a known peer (passive mode — peer connects to us)."""
+    def add_peer(
+        self,
+        neighbor_ip: str,
+        remote_as: int,
+        hold_time: int | None = None,
+        connect_retry: int | None = None,
+        passive: bool = True,
+    ) -> None:
+        """Register a known peer."""
         self._peers[neighbor_ip] = PeerConfig(
             neighbor_ip=neighbor_ip,
             remote_as=remote_as,
             local_as=self.local_as,
             local_router_id=self.local_router_id,
-            hold_time=self.hold_time,
-            passive=True,
-            **kwargs,
+            hold_time=hold_time if hold_time is not None else self.hold_time,
+            connect_retry=connect_retry if connect_retry is not None else 30,
+            passive=passive,
         )
 
     async def start(self) -> None:

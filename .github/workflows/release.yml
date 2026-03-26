@@ -1,0 +1,74 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # triggers on version tags like v1.0.0
+
+permissions:
+  contents: write   # required to create GitHub releases and upload assets
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tools
+        run: pip install build
+
+      - name: Build wheel and sdist
+        run: python -m build
+
+      - name: List dist/
+        run: ls -lh dist/
+
+      - name: Create GitHub Release and upload packages
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "BGP-LS Collector ${{ github.ref_name }}"
+          body: |
+            ## BGP-LS Topology Collector ${{ github.ref_name }}
+
+            Python packages for the BGP-LS Topology Collector dedicated to Nokia SROS routers.
+
+            ### Installation
+
+            ```bash
+            # Install from wheel (recommended)
+            pip install bgp_ls_collector-*-py3-none-any.whl
+
+            # Or from source distribution
+            pip install bgp_ls_collector-*.tar.gz
+            ```
+
+            ### Usage
+
+            ```bash
+            # Copy and edit config
+            cp config.yaml my-config.yaml
+
+            # Run the collector
+            bgp-ls-collector --config my-config.yaml
+
+            # Or with Docker
+            docker-compose up
+            ```
+
+            ### What's included
+            - BGP-4 speaker (RFC 4271) with BGP-LS support (RFC 7752)
+            - Full IS-IS, OSPFv2/v3, SR-MPLS, Flex-Algorithm attribute parsing
+            - Nokia SROS specific extensions and MD-CLI config generator
+            - REST API + WebSocket for real-time topology updates
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+          draft: false
+          prerelease: false
