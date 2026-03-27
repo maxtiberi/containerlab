@@ -12,7 +12,7 @@ services:
       # BGP listener
       - "179:179/tcp"
       # REST API + WebSocket
-      - "8080:8080/tcp"
+      - "8090:8090/tcp"
 
     volumes:
       # Mount a custom config at runtime
@@ -31,7 +31,7 @@ services:
 
     healthcheck:
       test: ["CMD", "python", "-c",
-             "import urllib.request; urllib.request.urlopen('http://localhost:8080/')"]
+             "import urllib.request; urllib.request.urlopen('http://localhost:8090/')"]
       interval: 30s
       timeout: 5s
       retries: 3

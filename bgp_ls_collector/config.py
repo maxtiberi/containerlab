@@ -47,7 +47,7 @@ class AppConfig:
 
     # ---- API ----
     api_host: str = "0.0.0.0"
-    api_port: int = 8080
+    api_port: int = 8090
     api_workers: int = 1
 
     # ---- Logging ----
@@ -95,7 +95,7 @@ def load_config(path: str | Path | None = None) -> AppConfig:
         allow_dynamic_peers=bool(bgp.get("allow_dynamic_peers", False)),
         peers=peers,
         api_host=api.get("host", "0.0.0.0"),
-        api_port=int(api.get("port", 8080)),
+        api_port=int(api.get("port", 8090)),
         log_level=logging_cfg.get("level", "INFO").upper(),
         log_format=logging_cfg.get("format", "text"),
     )
