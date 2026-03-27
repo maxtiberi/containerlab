@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> None:
         "--api-port",
         type=int,
         default=None,
-        help="TCP port for REST API (default: 8080)",
+        help="TCP port for REST API (default: 8090)",
     )
     parser.add_argument(
         "--log-level",

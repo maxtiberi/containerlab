@@ -49,7 +49,7 @@ bgp:
 api:
   # REST API + WebSocket listen address
   host: "0.0.0.0"
-  port: 8080
+  port: 8090
 
 logging:
   # Log level: TRACE | DEBUG | INFO | WARNING | ERROR
