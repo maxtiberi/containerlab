@@ -7,11 +7,10 @@
 
 ROLE="${1:-}"
 
-# Define VLAN sessions: IFACE:VLAN_ID:SRC_IP:DST_IP:PORT
-# Add or remove lines to configure more sessions
+# Define VLAN sessions: IFACE:VLAN_ID:SRC_IP:DST_IP:PREFIX_LEN:PORT
 SESSIONS="
-eth1:10:20.0.0.20:20.0.0.21:5201
-eth2:20:20.0.1.20:20.0.1.21:5202
+eth1:10:20.0.0.20:20.0.0.21:24:5201
+eth2:20:172.178.1.1:172.168.1.20:8:5202
 "
 
 TARGET_BPS="1000M"
@@ -26,7 +25,7 @@ install_deps() {
 }
 
 setup_vlan() {
-    local parent="$1" vlan_id="$2" ip="$3"
+    local parent="$1" vlan_id="$2" ip="$3" prefix="$4"
     local iface="${parent}.${vlan_id}"
 
     if ! ip link show "$iface" >/dev/null 2>&1; then
@@ -36,17 +35,17 @@ setup_vlan() {
     ip link set "$iface" up
 
     if ! ip addr show "$iface" | grep -q "${ip}/"; then
-        echo "[$iface] Assigning $ip/24..."
-        ip addr add "${ip}/24" dev "$iface"
+        echo "[$iface] Assigning $ip/$prefix..."
+        ip addr add "${ip}/${prefix}" dev "$iface"
     fi
-    echo "[$iface] Up with IP $ip"
+    echo "[$iface] Up with IP $ip/$prefix"
 }
 
 run_server_session() {
-    local parent="$1" vlan_id="$2" src="$3" dst="$4" port="$5"
+    local parent="$1" vlan_id="$2" src="$3" dst="$4" prefix="$5" port="$6"
     local iface="${parent}.${vlan_id}"
 
-    setup_vlan "$parent" "$vlan_id" "$dst"
+    setup_vlan "$parent" "$vlan_id" "$dst" "$prefix"
     echo "[$iface] iperf3 server listening on port $port..."
     while true; do
         iperf3 -s -p "$port" -i 5
@@ -56,10 +55,10 @@ run_server_session() {
 }
 
 run_client_session() {
-    local parent="$1" vlan_id="$2" src="$3" dst="$4" port="$5"
+    local parent="$1" vlan_id="$2" src="$3" dst="$4" prefix="$5" port="$6"
     local iface="${parent}.${vlan_id}"
 
-    setup_vlan "$parent" "$vlan_id" "$src"
+    setup_vlan "$parent" "$vlan_id" "$src" "$prefix"
 
     echo "[$iface] Waiting for ICMP to $dst..."
     for i in $(seq 1 30); do
@@ -88,17 +87,15 @@ run_client_session() {
 
 run_all() {
     local mode="$1"
-    local pids=""
 
-    echo "$SESSIONS" | grep -v '^\s*$' | while IFS=: read parent vlan_id src dst port; do
+    echo "$SESSIONS" | grep -v '^\s*$' | while IFS=: read parent vlan_id src dst prefix port; do
         if [ "$mode" = "server" ]; then
-            run_server_session "$parent" "$vlan_id" "$src" "$dst" "$port" &
+            run_server_session "$parent" "$vlan_id" "$src" "$dst" "$prefix" "$port" &
         else
-            run_client_session "$parent" "$vlan_id" "$src" "$dst" "$port" &
+            run_client_session "$parent" "$vlan_id" "$src" "$dst" "$prefix" "$port" &
         fi
     done
 
-    # Wait for all background jobs and exit if any fail
     wait
 }
 
@@ -120,8 +117,8 @@ case "$ROLE" in
         echo "Usage: $0 {server|client}"
         echo ""
         echo "Configured sessions:"
-        echo "$SESSIONS" | grep -v '^\s*$' | while IFS=: read parent vlan_id src dst port; do
-            echo "  VLAN $vlan_id on $parent: $src -> $dst (port $port)"
+        echo "$SESSIONS" | grep -v '^\s*$' | while IFS=: read parent vlan_id src dst prefix port; do
+            echo "  VLAN $vlan_id on $parent: $src -> $dst/$prefix (port $port)"
         done
         exit 1
         ;;
