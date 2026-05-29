@@ -47,9 +47,13 @@ setup_vlan() {
 
 run_server() {
     setup_vlan "$DST_IP"
-    echo "Starting iperf3 server on $DST_IP..."
-    # -s server, -B bind to address, -1 exit after one connection (removed so it loops)
-    exec iperf3 -s -B "$DST_IP" --forking
+    echo "Starting iperf3 server on $DST_IP (port 5201)..."
+    # Loop so server restarts after each client disconnects
+    while true; do
+        iperf3 -s -B "$DST_IP" -p 5201
+        echo "iperf3 server exited, restarting..."
+        sleep 1
+    done
 }
 
 run_client() {
@@ -70,8 +74,8 @@ run_client() {
     # -t duration (0 = infinite, but iperf3 doesn't support 0; use large value)
     # -i 5 report interval in seconds
     # --omit 2 omit first 2 seconds (TCP slow-start)
-    STREAM_BPS=$(echo "$TARGET_BPS" | sed 's/M//')
-    STREAM_BPS="$((${STREAM_BPS%M} / $STREAMS))M"
+    TOTAL_MBPS=$(echo "$TARGET_BPS" | tr -d 'M')
+    STREAM_BPS="$((TOTAL_MBPS / STREAMS))M"
 
     exec iperf3 \
         -c "$DST_IP" \
@@ -80,7 +84,8 @@ run_client() {
         -P "$STREAMS" \
         -t 86400 \
         -i 5 \
-        --omit 2
+        --omit 2 \
+        -p 5201
 }
 
 [ "$(id -u)" -eq 0 ] || die "Must run as root"
